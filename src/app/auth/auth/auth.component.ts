@@ -5,7 +5,6 @@ import { Observable, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { AlertComponent } from 'src/app/shared/alert/alert.component';
 import { PlaceHolderDirective } from 'src/app/shared/placeholder/placeholder.directive';
-import { timingSafeEqual } from 'crypto';
 
 @Component({
   selector: 'app-auth',
