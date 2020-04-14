@@ -1,22 +1,33 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ComponentFactoryResolver, ViewChild, OnDestroy } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { AuthService, AuthResponseData } from '../auth.service';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
+import { AlertComponent } from 'src/app/shared/alert/alert.component';
+import { PlaceHolderDirective } from 'src/app/shared/placeholder/placeholder.directive';
+import { timingSafeEqual } from 'crypto';
 
 @Component({
   selector: 'app-auth',
   templateUrl: './auth.component.html',
   styleUrls: ['./auth.component.css']
 })
-export class AuthComponent implements OnInit {
+export class AuthComponent implements OnInit, OnDestroy {
 
   isLoginMode = true;
   isLoading = false;
   error: string = null;
+  @ViewChild(PlaceHolderDirective, { static: true }) alertHost: PlaceHolderDirective;
+
+  private subscription: Subscription;
 
   constructor(private authService: AuthService,
-    private router: Router) { }
+    private router: Router,
+    private componentFactoryResolver: ComponentFactoryResolver) { }
+
+  ngOnDestroy(): void {
+    if(this.subscription) this.subscription.unsubscribe();
+  }
 
   ngOnInit(): void {
   }
@@ -49,11 +60,29 @@ export class AuthComponent implements OnInit {
       },
       errorMessage => {
         this.error = errorMessage;
+        this.showErrorAlert(errorMessage);
         this.isLoading = false;
       }
     );
 
     form.reset();
+  }
+
+  onHandleError() {
+    this.error = null;
+  }
+
+  showErrorAlert(errorMessage: string) {
+    const alertCmpFactory = this.componentFactoryResolver.resolveComponentFactory(AlertComponent);
+    const hostViewCOntainerRef = this.alertHost.viewCOntainerRef;
+    hostViewCOntainerRef.clear();
+
+    const componenRef = hostViewCOntainerRef.createComponent(alertCmpFactory);
+    componenRef.instance.message = this.error;
+    this.subscription = componenRef.instance.close.subscribe(() => {
+      this.subscription.unsubscribe();
+      hostViewCOntainerRef.clear();
+    });
   }
 
 }
